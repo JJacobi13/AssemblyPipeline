@@ -1,0 +1,11 @@
+PASS	Basic Statistics	hiSeq1_1.fastq
+PASS	Per base sequence quality	hiSeq1_1.fastq
+PASS	Per sequence quality scores	hiSeq1_1.fastq
+WARN	Per base sequence content	hiSeq1_1.fastq
+PASS	Per base GC content	hiSeq1_1.fastq
+PASS	Per sequence GC content	hiSeq1_1.fastq
+PASS	Per base N content	hiSeq1_1.fastq
+PASS	Sequence Length Distribution	hiSeq1_1.fastq
+WARN	Sequence Duplication Levels	hiSeq1_1.fastq
+WARN	Overrepresented sequences	hiSeq1_1.fastq
+WARN	Kmer Content	hiSeq1_1.fastq

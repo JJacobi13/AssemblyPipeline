@@ -1,0 +1,3 @@
+
+class IlluminaFastqConverter(object):
+    pass

@@ -1,0 +1,38 @@
+03/20/2014 04:38:27 PM   INFO        Starting genome size estimation
+03/20/2014 04:38:27 PM   INFO        starting command jellyfish
+03/20/2014 04:38:27 PM   DEBUG       command: jellyfish count -m 17 -s 200000000 -t 20 -o someoutDir/genSize -C forward reversed secForward secReversed 
+03/20/2014 04:38:27 PM   DEBUG       'jellyfish' is not recognized as an internal or external command,
+03/20/2014 04:38:27 PM   DEBUG       operable program or batch file.
+03/20/2014 04:38:27 PM   INFO        finished jellyfish
+03/20/2014 04:38:27 PM   INFO        starting command jellyfish
+03/20/2014 04:38:27 PM   DEBUG       command: jellyfish stats  -o someoutDir/genomeSize_stats.txt someoutDir/genSize_0 
+03/20/2014 04:38:27 PM   DEBUG       'jellyfish' is not recognized as an internal or external command,
+03/20/2014 04:38:27 PM   DEBUG       operable program or batch file.
+03/20/2014 04:38:27 PM   INFO        finished jellyfish
+03/20/2014 04:38:48 PM   INFO        Starting genome size estimation
+03/20/2014 04:38:48 PM   INFO        starting command jellyfish
+03/20/2014 04:38:48 PM   DEBUG       command: jellyfish count -m 17 -s 200000000 -t 20 -o someoutDir/genSize -C forward reversed secForward secReversed 
+03/20/2014 04:38:48 PM   DEBUG       'jellyfish' is not recognized as an internal or external command,
+03/20/2014 04:38:48 PM   DEBUG       operable program or batch file.
+03/20/2014 04:38:48 PM   INFO        finished jellyfish
+03/20/2014 04:38:48 PM   INFO        starting command jellyfish
+03/20/2014 04:38:48 PM   DEBUG       command: jellyfish stats  -o someoutDir/genomeSize_stats.txt someoutDir/genSize_0 
+03/20/2014 04:38:48 PM   DEBUG       'jellyfish' is not recognized as an internal or external command,
+03/20/2014 04:38:48 PM   DEBUG       operable program or batch file.
+03/20/2014 04:38:48 PM   INFO        finished jellyfish
+03/20/2014 04:38:59 PM   INFO        Starting genome size estimation
+03/20/2014 04:38:59 PM   INFO        starting command jellyfish
+03/20/2014 04:38:59 PM   DEBUG       command: jellyfish count -m 17 -s 200000000 -t 20 -o someoutDir/genSize -C forward reversed secForward secReversed 
+03/20/2014 04:38:59 PM   DEBUG       'jellyfish' is not recognized as an internal or external command,
+03/20/2014 04:38:59 PM   DEBUG       operable program or batch file.
+03/20/2014 04:38:59 PM   INFO        finished jellyfish
+03/20/2014 04:38:59 PM   INFO        starting command jellyfish
+03/20/2014 04:38:59 PM   DEBUG       command: jellyfish stats  -o someoutDir/genomeSize_stats.txt someoutDir/genSize_0 
+03/20/2014 04:38:59 PM   DEBUG       'jellyfish' is not recognized as an internal or external command,
+03/20/2014 04:38:59 PM   DEBUG       operable program or batch file.
+03/20/2014 04:38:59 PM   INFO        finished jellyfish
+03/20/2014 04:38:59 PM   INFO        starting command jellyfish
+03/20/2014 04:38:59 PM   DEBUG       command: jellyfish histo  -h 100  -t 20  -o someoutDir/genomeSize_histo.histo someoutDir/genSize_0 
+03/20/2014 04:38:59 PM   DEBUG       'jellyfish' is not recognized as an internal or external command,
+03/20/2014 04:38:59 PM   DEBUG       operable program or batch file.
+03/20/2014 04:38:59 PM   INFO        finished jellyfish
