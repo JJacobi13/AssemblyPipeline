@@ -20,7 +20,7 @@
 ##
 ## File requirements:
 ## Before first dot has to be the library name defined in the configuration file
-## Paired end reads have to end with _1 and _2
+## Paired end reads have to end with _1.fastq and _2.fastq
 ## 
 #################################################################################################################################
 ##  Imports  ##
@@ -28,7 +28,7 @@
 from configuration import Configuration
 from pipelineUtils import FastqUtils
 import os
-
+from qualityControl import FileControl
 ################
 ##  Settings  ##
 ################
@@ -65,7 +65,9 @@ rule fastqMcf:
 	output: 
 		forward = "{samples}.mcf_1.fastq",
 		reversed = "{samples}.mcf_2.fastq"
-	shell: "fastq-mcf -D  {DUPLICATE_REQ_OVERLAP} -o {output.forward} -o {output.reversed} {ADAPTERFILE} {input.forward} {input.reversed}"
+	run: 
+		shell("fastq-mcf -D  {DUPLICATE_REQ_OVERLAP} -o {output.forward} -o {output.reversed} {ADAPTERFILE} {input.forward} {input.reversed}")
+		FileControl.fastqControlPaired(output.forward, output.reversed)
 
 rule trimmomatic:
 	input:
@@ -77,7 +79,9 @@ rule trimmomatic:
 		forwardUnpaired = "{samples}.trim_unpaired_1.fastq",
 		reversedUnpaired = "{samples}.trim_unpaired_2.fastq",
 	threads: 5
-	shell: "java -jar {TRIMMOMATIC_JAR} PE {TRIMMOMATIC_PHRED_ENCODING} -threads {threads} {input.forward} {input.reversed} {output.forward} {output.forwardUnpaired} {output.reversed} {output.reversedUnpaired}  ILLUMINACLIP:{ADAPTERFILE}:{ADAPTER_MISMATCHES}:30:10 LEADING:{MIN_TRIM_QUALITY} TRAILING:{MIN_TRIM_QUALITY} SLIDINGWINDOW:4:15 MINLEN:{MIN_READ_LEN}"
+	run: 
+		shell("java -jar {TRIMMOMATIC_JAR} PE {TRIMMOMATIC_PHRED_ENCODING} -threads {threads} {input.forward} {input.reversed} {output.forward} {output.forwardUnpaired} {output.reversed} {output.reversedUnpaired}  ILLUMINACLIP:{ADAPTERFILE}:{ADAPTER_MISMATCHES}:30:10 LEADING:{MIN_TRIM_QUALITY} TRAILING:{MIN_TRIM_QUALITY} SLIDINGWINDOW:4:15 MINLEN:{MIN_READ_LEN}")
+		FileControl.fastqControlPaired(output.forward, output.reversed)
 	
 # rule cutadapt:
 # 	input:
@@ -91,10 +95,10 @@ rule trimmomatic:
 ########################
 ##  File conversions  ##
 ########################
-# rule sffToFastq:
-# 	input: inFile = "{samples}.sff"
-# 	output: outFile = "{samples}.fastq"
-# 	shell: "sff2fastq -o {output.outFile} {input.inFile}"
+rule sffToFastq:
+	input: inFile = "{samples}.sff"
+	output: outFile = "{samples}.fastq"
+	shell: "sff2fastq -o {output.outFile} {input.inFile}"
 	
 ###############################
 ##  Contamination filtering  ##
@@ -116,6 +120,7 @@ rule filterPhiX:
 		shell("bowtie2 -p {threads} -x {input.reference} --un-conc {output.forward}_tmp_unmapppedPhix.fastq -I {minInsert} -X {maxInsert} -1 {input.forward} -2 {input.reversed} -S /dev/null")
 		os.rename(output.forward + "_tmp_unmapppedPhix.1.fastq", output.forward)
 		os.rename(output.forward + "_tmp_unmapppedPhix.2.fastq", output.reversed)
+		FileControl.fastqControlPaired(output.forward, output.reversed)
 		
 	
 rule bowtieIndex:
@@ -137,9 +142,14 @@ rule seqprep:
 	run: 
 		phredEncoding = "" if FastqUtils.determineQuality(input.forward) == 32 else "-6 "
 		shell("SeqPrep " + phredEncoding + "-f " + input.forward + " -r " + input.reversed + " -1 "+output.forwardSingle+".gz -2 " + output.reversedSingle + ".gz -s " + output.merged + ".gz")
+		#TODO: Find better way to do unzipping with the rule, and still execute fastq control on all output files...
 		shell("gunzip " + output.merged + ".gz")
 		shell("gunzip " + output.forwardSingle + ".gz")
 		shell("gunzip " + output.reversedSingle + ".gz")
+		FileControl.fastqControl(output.merged)
+		FileControl.fastqControl(forwardSingle.merged)
+		FileControl.fastqControl(reversedSingle.merged)
+		
 #######################
 ##  kmer correction  ##
 #######################
@@ -157,6 +167,7 @@ rule quake:
 		shell("correct -f {input.fileNames} -k " + CONFIG.getGlobalOption("kmer") + " -c {QUAKE_MINIMUM_COUNTS} -m {input.countsFile} -p {threads}")
 		os.rename(output.forward.replace(".quake_1","_1.cor"), output.forward)
 		os.rename(output.reversed.replace(".quake_2","_2.cor"), output.reversed)
+		FileControl.fastqControlPaired(output.forward, output.reversed)
 
 rule kmerCounts:
 	input:
@@ -178,9 +189,10 @@ rule fastqNamesFile:
 		with open(output[0], "w") as writer:
 			writer.write(input.forward + " ")
 			writer.write(input.reversed)
-
-# rule unzip:
-# 	input: "{samples}.gz"
-# 	output: "{samples}"
-# 	shell: "gunzip {input[0]}"
+#First with .fastq.gz, because .gz gives maximum recursion depth exceeded... 
+#TODO: find better way, hate workarounds...
+rule unzip:
+	input: "{file}.fastq.gz"
+	output: "{file}.fastq"
+	shell: "gunzip {input[0]}"
 
