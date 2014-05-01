@@ -29,6 +29,11 @@ class Command(object):
         self.checkInput()
         self.setCommand()
         self.updateStatus()
+        
+    def cleanup(self):
+        """
+        The method cleanup removes all intermediate files if the output file is created.
+        """
     
     def addArg(self, cmdToAdd):
         """
@@ -60,7 +65,7 @@ class Command(object):
         from qualityControl.Reporter import Reporter
         Reporter.instance.objects.append(self)
         if int(Configuration.instance.getGlobalOption("overwrite")) == 0:
-            if os.path.isfile(self.outputFile):
+            if os.path.isfile(self.outputFile) and os.path.getsize(self.outputFile) > 50:
                 logging.info("skipping command " + self.cmd.split(" ")[0] + ", outputfile already exists.")
                 logging.debug("command: " + self.cmd)
                 return self.outputFile
@@ -74,4 +79,8 @@ class Command(object):
         p.wait()
         logging.info("finished " + self.cmd.split(" ")[0])
         
+        #Remove tmp data
+        if os.path.exists(self.outputFile):
+            self.cleanup()
+            
         return self.outputFile

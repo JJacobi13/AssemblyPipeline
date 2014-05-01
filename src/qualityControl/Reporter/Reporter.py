@@ -7,14 +7,14 @@ class Reporter(object):
     def __init__(self, ):
         self.objects = []
         
-    def createReport(self, outputDir):
+    def createReport(self, outputDir, small=False):
         self.outputDir = outputDir
         if not os.path.isdir(self.outputDir):
             os.makedirs(self.outputDir)
 #         self.createHtmlReport(objects)
-        self.createLaTeXReport(self.objects)
+        self.createLaTeXReport(self.objects, small)
         
-    def createLaTeXReport(self, objects):
+    def createLaTeXReport(self, objects, small=False, name=None):
         self.fileName = self.outputDir + "report.tex"
         with open(self.fileName, "w") as outWriter:
             outWriter.write("\\documentclass{report}\n")
@@ -24,18 +24,25 @@ class Reporter(object):
 #             outWriter.write("\\hypersetup{colorlinks,citecolor=black, filecolor=black,linkcolor=black,urlcolor=black}\n")
             
             outWriter.write("\\begin{document}\n")
-            
-            outWriter.write("\\title{Report of the assembly pipeline}\n")
-            outWriter.write("\\author{Automatically generated}\n")
-            outWriter.write("\\date{\\today}\n")
-            outWriter.write("\\maketitle\n")
-            
-            outWriter.write("\\tableofcontents\n")
+            if small==True:
+                if name == None:
+                    outWriter.write("\\section*{Report generated on \\today}")
+                else:
+                    outWriter.write("\\section*{Report of "+name+", generated on \\today}")
+            else:
+                outWriter.write("\\title{Report of the assembly pipeline}\n")
+                outWriter.write("\\author{Automatically generated}\n")
+                outWriter.write("\\date{\\today}\n")
+                outWriter.write("\\maketitle\n")
+                
+                outWriter.write("\\tableofcontents\n")
             outWriter.write("\\setcounter{secnumdepth}{0}\n")
             
             for objectInstance in objects:
+                if hasattr(objectInstance, "getDescription"):
+                    outWriter.write(objectInstance.getDescription() + "\\\\\\\\\n")
                 if hasattr(objectInstance, "getLaTeXReport"):
-                    outWriter.write("\\clearpage")
+#                     outWriter.write("\\clearpage")
                     outWriter.write(objectInstance.getLaTeXReport())
             outWriter.write("\\end{document}\n")
         

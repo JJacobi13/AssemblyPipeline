@@ -6,7 +6,10 @@ class PBJelly(Command.Command):
     """
     The PBJelly object executes all 5 steps of PBJelly in a row.
     #TODO: !!!NOT hardcoded path to Jelly.py!!!
-    """    
+    """ 
+    def getDescription(self):
+        return """The scaffolding is done with the PBJelly version 13.10.22 (WARNING, hardcoded)"""
+       
     def checkInput(self):
         self.createProtocol()
         

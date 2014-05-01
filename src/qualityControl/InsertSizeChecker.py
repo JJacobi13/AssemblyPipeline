@@ -1,7 +1,6 @@
 import os, sys, math, re, logging
-from model import Pool, Library
 from  commandLineCommands import Mappers, Command
-from configuration.Configuration import Section
+from configuration import Configuration
 from Reporter import LaTeX, Reporter
 
 class InsertSizeChecker(object):
@@ -13,23 +12,16 @@ class InsertSizeChecker(object):
         """
         The main method is executed when executing the InsertSizeChecker directly from the command line. All arguments are
         retrieved from the command-line.
-        #TODO: make it work for the newest version...
         """
-        if len(sys.argv) != 5:
-            print "usage: InsertSizeChecker.py <forward> <rev> <refGenome> <outDir>"
+        if len(sys.argv) != 7:
+            print "usage: InsertSizeChecker.py <forward> <rev> <refGenome> <outDir> <libName> <Estimated insert size>"
             exit()
             
         logging.basicConfig(format="%(asctime)-25s%(message)s", level=logging.DEBUG, datefmt="%m/%d/%Y %I:%M:%S %p")
-        pool = Pool.Pool(outputDir=sys.argv[4])
-        lib = Library.Library(pool, os.path.splitext(os.path.basename(sys.argv[1]))[0])
-        lib.forward = sys.argv[1]
-        lib.reversed = sys.argv[2]
-        pool.contigsFasta = sys.argv[3]
-        pool.config.sections["global"] = Section("global")
-        pool.config.sections["global"].setOption("overwrite", 0)
-        pool.config.sections["global"].setOption("maxThreads", "20")
-        self.checkInsertSize(lib)
-        Reporter.Reporter(pool, self)
+        Configuration.instance.setOption("overwrite", "0")
+        Configuration.instance.setOption("overwrite", "20")
+        self.checkInsertSize(sys.argv[4], sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[5], sys.argv[6])
+        Reporter.instance.createReport(sys.argv[4], small=True)
     
     def checkInsertSize(self, outputDir, forwardReads, reversedReads, refGenome, libName, insertSize):
         """

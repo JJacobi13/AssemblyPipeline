@@ -12,7 +12,7 @@ class FastqReportCreator(Command.Command):
             raise ValueError("FastqReportCreator has no forward reads, which are required for creating a fastqc report")
     
     def getLaTeXReport(self):
-        txt = "\\section{Fastqc of " +self.status+"}\n"
+        txt = "\\section{Fastqc of " +self.status.replace("_"," ")+"}\n"
         table = False
         imgs = 0
         with open(self.outputFile) as reportReader:

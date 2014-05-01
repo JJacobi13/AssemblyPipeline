@@ -3,6 +3,7 @@ from Bio import SeqIO
 from commandLineCommands import Rscripts, Mappers, BamCommands, FastaCommands
 from qualityControl.Reporter import Reporter, LaTeX
 from configuration import Configuration
+from parsers import GenBlastParser
 # from qualityControl import BlastScanner
 
 class AssemblyStatistics(object):
@@ -44,6 +45,7 @@ class AssemblyStatistics(object):
         parser.add_argument("--nrDb", help="an already downloaded nr database for contamination check", required=False)
         parser.add_argument("--maxThreads", help="The number of threads to use (default 20)", metavar="N", default=20)
         parser.add_argument("--overwrite", help="Overwrite existing files", action="store_true")
+        parser.add_argument("--cegma",help="comma separated list of fasta files for completion check")
         args = parser.parse_args()
         args.fastaFile.close()
         self.fastaFile = args.fastaFile.name
@@ -56,6 +58,10 @@ class AssemblyStatistics(object):
         self.forwardRna = args.forwardRna
         self.reversedRna = args.reversedRna
         self.nrDb = args.nrDb
+        if args.cegma:
+            self.cegmaFiles = args.cegma.split(",")
+        else:
+            self.cegmaFiles = []
         
         Configuration.instance.setOption("maxThreads", str(args.maxThreads))
         if args.overwrite == True:
@@ -64,7 +70,7 @@ class AssemblyStatistics(object):
             Configuration.instance.setOption("overwrite", "0")
         
         self.doQualityControl()
-        Reporter.instance.createReport(self.outputDir)
+        Reporter.instance.createReport(self.outputDir, small=True, name=os.path.basename(self.fastaFile))
     
     def AssemblyStatisticsOfPipeline(self, outputDir, pool, fastaFile):
         """
@@ -92,7 +98,7 @@ class AssemblyStatistics(object):
         """
         Convert all previously calculated statistics into LaTeX with this method.
         """
-        txt = "\\section{Assembly statistics}\n"
+        txt = "\\subsection{Statistics}\n"
         table = LaTeX.ltxTable(2)
         table.addRow(["Total sequences: ",str(self.totalSeqs)])
         table.addRow(["Total length: ","{:,}".format(self.totalLen)])
@@ -107,12 +113,18 @@ class AssemblyStatistics(object):
             table.addRow(["",""])
             table.addRow(["Cegma complete: ",self.cegmaScore[0] + "\%"])
             table.addRow(["Cegma partial: ",self.cegmaScore[1] + "\%"])
+        for name, value in self.otherCegmaScores.iteritems():
+            table.addRow(["",""])
+            table.addRow([name + " complete: ",value[0] + "\%"])
+            table.addRow([name + " partial: ",value[1] + "\%"])
+            
         if hasattr(self, "rawDnaMappingStats"):
             table.addRow(["",""])
             table.addRow(["DNA reads: ","{:,}".format(int(self.rawDnaMappingStats["total"]))])
             table.addRow(["Mapped: ",self.rawDnaMappingStats["mapped"] + "\%"])
             if "propPair" in self.rawDnaMappingStats:
                 table.addRow(["Properly paired",self.rawDnaMappingStats["propPair"] + "\%"])
+            table.addRow(["Error rate: ","{:.2f}".format(self.errorRate) + " SNPs per 10kb"])
             table.addRow(["SNP density: ","{:.2f}".format(self.snpDensity) + " SNPs per 10kb"])
         if hasattr(self, "rnaMappingStats"):
             table.addRow(["",""])
@@ -144,13 +156,19 @@ class AssemblyStatistics(object):
         if self.forwardRna != None:
             self.getRnaMappingPerc()
         self.a50Plot = Rscripts.A50Plotter(self.outputDir, faFile = self.fastaFile).execute()
-#         self.cegmaScore = self.getCegmaStatistics()      
+        self.cegmaScore = self.getCegmaStatistics()
+        self.otherCegmaScores = {}
+        for cegmaFile in self.cegmaFiles:
+            logging.info("Executing genBlastA on " + cegmaFile)
+            genBlastFile = FastaCommands.GenBlastA(self.outputDir, referenceGenome=self.fastaFile, proteins=cegmaFile).execute()
+            gbParser = GenBlastParser.GenBlastParser(genBlastFile)
+            self.otherCegmaScores[os.path.splitext(os.path.basename(cegmaFile))] = [gbParser.full, gbParser.partial]
         
-    def getCegmaStatistics(self):
+    def getCegmaStatistics(self, coreGenes=None):
         """
         This method executes the cegma command and parses the output file to retrieve the percentage of core eukaryotic genes which are found complete or partial.
         """
-        cegmaFile = FastaCommands.CegmaCommand(self.outputDir, genome=self.fastaFile).execute()
+        cegmaFile = FastaCommands.CegmaCommand(self.outputDir, genome=self.fastaFile, coreGenes=coreGenes).execute()
         complete = "-"
         partial = "-"
         with open(cegmaFile) as fileReader:
@@ -185,9 +203,12 @@ class AssemblyStatistics(object):
             samFile = Mappers.Bowtie(self.outputDir, refGenome=self.fastaFile, forward=self.forward, reversed=self.reversed, insertSize=self.insertSize).execute()
 
         bamFile = BamCommands.SamToBamConverter(self.outputDir, samFile=samFile).execute()
+        logging.info("Getting DNA mapping statistics")
         self.rawDnaMappingStats = self.getMappingPerc(bamFile)
         vcfFile = BamCommands.SamtoolsMpileup(self.outputDir, bamFile=bamFile, fastaFile=self.fastaFile).execute()
-        self.snpDensity = self.getSnpDensity(vcfFile)
+        logging.info("Calculating SNP density")
+        [self.errorRate, self.snpDensity] = self.getSnpDensity(vcfFile)
+        logging.info("Error rate: " + "{:.2E}".format(self.snpDensity))
         logging.info("SNP density: " + "{:.2E}".format(self.snpDensity))
            
     def calculateBaseStatistics(self):
@@ -225,13 +246,21 @@ class AssemblyStatistics(object):
         """
         The SNP density is calculated by reading all lines of a vcf files which are not comments and are not empty
         """
-        noOfSnps = 0
+        errors = 0
+        heterozygotes = 0
         with open(vcfFile) as vcfReader:
             for line in vcfReader:
                 if line.startswith("#") or line.strip() == False:
                     continue
-                noOfSnps = noOfSnps +1
-        return noOfSnps/float(self.totalLen)*10000
+                splitted = line.split("\t")
+                if len(splitted) !=10:
+                    continue
+                if splitted[9].startswith("1/1"):
+                    errors += 1
+                else:
+                    heterozygotes += 1
+                    
+        return [errors/float(self.totalLen)*10000, heterozygotes/float(self.totalLen)*10000]
     
     def getMappingPerc(self, bamFile):
         """

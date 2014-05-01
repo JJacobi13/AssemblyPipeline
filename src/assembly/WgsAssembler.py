@@ -1,4 +1,4 @@
-import sys, os, math, logging
+import sys, os, math, logging, shutil
 from model import Pool
 from commandLineCommands import Command
 from configuration import Configuration
@@ -18,6 +18,8 @@ class WgsAssembler(object):
         """
         pool = self.parseArguments()
         self.doAssembly(pool)
+    
+    
         
     def doAssembly(self, outputDir, pool):
         """
@@ -121,6 +123,23 @@ class RunCaCommand(Command.Command):
     """
     The RunCaCommand runs the wgs assembler
     """  
+    
+    def cleanup(self):
+        print "###############cleanup!"
+        for filename in os.listdir(self.outputDir):
+            if filename.startswith("9-"):
+                for subFileName in os.listdir(self.outputDir + "9-terminator/"):
+                    if subFileName != os.path.basename(self.outputFile):
+                        os.remove(self.outputDir + "9-terminator/" + subFileName)                       
+            else:
+                if os.path.isdir(self.outputDir + filename):
+                    shutil.rmtree(self.outputDir + filename)
+                else:
+                    os.remove(self.outputDir + filename)
+    
+    def getDescription(self):
+        return """The assembly is executed with the WGS (celera) assembler version 8.1 (WARNING, hardcoded)"""
+    
     def setCommand(self):
         self.assemblyPrefix = "assembly"
         self.outputFile = self.outputDir + "9-terminator/"+self.assemblyPrefix+".ctg.fasta"

@@ -1,14 +1,19 @@
-import Command
+import Command, os
 from configuration import Configuration
 
 class CegmaCommand(Command.Command):
     
     def setCommand(self):
-        self.outputFile = self.outputDir + "cegma.completeness_report"
+        name = "cegma"
         self.addArg("cegma")
         self.addArg("-g " + self.genome)
-        self.addArg("-o " + self.outputDir + "cegma")
+        if self.coreGenes !=None:
+            self.addArg("-p " + self.coreGenes)
+            name = os.path.basename(os.path.splitext(self.coreGenes)[0])
+        self.addArg("-o " + self.outputDir + name)
         self.addArg("-T " + Configuration.instance.getGlobalOption("maxThreads"))
+        
+        self.outputFile = self.outputDir + name + ".completeness_report"
         
 class BlastCommand(Command.Command):
     
@@ -21,4 +26,17 @@ class BlastCommand(Command.Command):
         self.addArg("-outfmt \"6 qseqid sseqid evalue bitscore sgi sacc staxids stitle\"")
         self.addArg("-num_alignments 2")
         
-        
+class GenBlastA(Command.Command):
+    
+    def setCommand(self):
+        self.outputFile = self.outputDir + self.name + ".gbo"
+        self.report = self.referenceGenome + ".gba.report"
+        self.blastOutput = self.referenceGenome + ".blast"
+        self.addArg("genBlastA")
+        self.addArg("-P blast")
+        self.addArg("-q " + self.proteins)
+        self.addArg("-t " + self.referenceGenome)
+        self.addArg("-p T")
+        self.addArg("-pg tblastx")
+        self.addArg("-e 1e-5")
+        self.addArg("-o " + self.outputFile)
