@@ -7,12 +7,12 @@ class Reporter(object):
     def __init__(self, ):
         self.objects = []
         
-    def createReport(self, outputDir, small=False):
+    def createReport(self, outputDir, small=False, name=None):
         self.outputDir = outputDir
         if not os.path.isdir(self.outputDir):
             os.makedirs(self.outputDir)
 #         self.createHtmlReport(objects)
-        self.createLaTeXReport(self.objects, small)
+        self.createLaTeXReport(self.objects, small, name)
         
     def createLaTeXReport(self, objects, small=False, name=None):
         self.fileName = self.outputDir + "report.tex"
