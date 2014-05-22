@@ -1,6 +1,10 @@
-import glob
+import glob, logging
 from qualityControl.Reporter import Reporter
 from qualityControl import FastqSmallReport
+from configuration import Configuration
+
+logging.basicConfig(format="%(asctime)-25s%(message)s", level=logging.DEBUG, datefmt="%m/%d/%Y %I:%M:%S %p")
+
 libs = {}
 for fileName in glob.glob("*.fastq"):
     lib = fileName.split("_")[0].split(".")[0]
@@ -22,9 +26,12 @@ for key, value in libs.items():
             pass
         i += 1
         if reversedFastq == None:
-            print("Creating report for " + forwardFastq)
+            logging.info("Creating report for " + forwardFastq)
+            FastqSmallReport.FastqSmallReport().createSmallReport(forwardFastq)
         else:
-            print("Creating report for " + forwardFastq + " and " + reversedFastq)
-        FastqSmallReport.FastqSmallReport().createSmallReport(forwardFastq, reversedFastq)
-        Reporter.Reporter().createReport("report/", small)
+            logging.info("Creating report for " + forwardFastq + " and " + reversedFastq)
+            FastqSmallReport.FastqSmallReport().createSmallReport(forwardFastq, reversedFastq)
+    
+Configuration.instance.setOption("overwrite", "1")
+Reporter.Reporter().createReport("report/")
         

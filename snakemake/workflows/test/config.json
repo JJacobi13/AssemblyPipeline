@@ -1,0 +1,34 @@
+{
+	"maxMem" : 200000000,
+	"kmerSize" : 17,
+	"illuminaAdapters" : "/home/jaco001/data/illumina-adapter-trimming-file.fna",
+	"libraries":{
+		"fragData":{
+			"reads" : ["/home/jaco001/beauveriaBassiana/1520/raw/1520.L180_SZABPI034205-52_1.fq","/home/jaco001/beauveriaBassiana/1520/raw/1520.L180_SZABPI034205-52_2.fq"],
+			"format" : "fastq",
+			"type" : "pe",
+			"insertSize" : 180,
+			"insertSizeStdev" : 36,
+			"readlen" : 100,
+			"platform" : "illumina"
+		},
+		"matepairData":{
+			"reads" : ["/home/jaco001/beauveriaBassiana/1520/raw/1520.L10000_FUNtdhRABDTAAPEI-94_1.fq","/home/jaco001/beauveriaBassiana/1520/raw/1520.L10000_FUNtdhRABDTAAPEI-94_2.fq"],
+			"type" : "mp",
+			"insertSize" : 10000,
+			"insertSizeStdev" : 2000,
+			"readlen" : 90,
+			"platform" : "illumina"
+		}
+	},
+	"minReadLen" : 36,
+	"reqOverlapDuplicate" : 60,
+	"minTrimQuality" : 3,
+	"adapterMismatches" : 2,
+	"minTrustedKmerCounts" : 20,
+	"contaminationRefGenomes" : {
+		"PhiX" : "/home/jaco001/programmingProjects/assembly/src/preprocessing/phixDb/PhiX.fasta"
+	},
+	"trimmomaticJar" : "/home/jaco001/programs/trimmomatic-0.32.jar",
+	"TrimmomaticPhredEncoding" : "-phred33"
+}
