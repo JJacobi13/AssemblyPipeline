@@ -2,7 +2,7 @@
 @author: Jetse
 @version: 0.2
 @attention: Not tested yet, full dataset needed...
-@bug: output of quake single probably has to be changed, will figure out in tests
+@bug: output of quake may have to be changed, will figure out in tests
 
 "Quake is a package to correct substitution sequencing errors in experiments with deep coverage (e.g. >15X), 
 specifically intended for Illumina sequencing reads. Quake adopts the k-mer error correction framework, 

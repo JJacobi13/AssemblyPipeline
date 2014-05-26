@@ -1,4 +1,4 @@
-import json, os
+import json, os, sys
  
 with open("config.json") as f:
     CONFIG = json.load(f)
@@ -13,10 +13,11 @@ for sample in CONFIG["libraries"]:
             pass
 
 #TODO: relative paths, __file__ is path to snakemake...       
-include: "/home/VLPB/pythonCodebase/AssemblyPipeline/snakemake/rules/fastqProcessing/Trimming.py"
+include: os.path.dirname(sys.argv[2])+"/../../rules/fastqProcessing/Trimming.py"
  
-include: "/home/VLPB/pythonCodebase/AssemblyPipeline/snakemake/rules/fastqProcessing/ContaminationFiltering.py"
+include: os.path.dirname(sys.argv[2])+"/../../rules/fastqProcessing/ContaminationFiltering.py"
 
-include: "/home/VLPB/pythonCodebase/AssemblyPipeline/snakemake/rules/fastqProcessing/Merging.py"
+include: os.path.dirname(sys.argv[2])+"/../../rules/fastqProcessing/Merging.py"
 
-include: "/home/VLPB/pythonCodebase/AssemblyPipeline/snakemake/rules/fastqProcessing/KmerCorrection.py"
+include: os.path.dirname(sys.argv[2])+"/../../rules/fastqProcessing/KmerCorrection.py"
+
