@@ -11,7 +11,7 @@ All prefixes are shown in the following list:
   * Trimming module
   	* mcf - Trim fastq reads with fastq-mcf
   	* trim - Trim fastq reads with Trimmomatic
-  * ContaminationFiltering module 
+  * ContaminationFiltering module (untested)
   	* {organism}Filtered - {organism} reads are removed with bowtie2, more info below in section Organism filtering
   * KmerCorrection module
   	* quake - Correct fastq reads with Quake
@@ -24,7 +24,7 @@ To make all rules work, all data has to be converted to fastq format. All suppor
 
   * .sff (454 reads) are converted with sff2fastq
   * .fq - a symlink is created to this file
-  
+   
 Fastq-mcf
 ---------
 > Fastq-mcf detects levels of adapter presence, computes likelihoods and locations (start, end) of the adapters. 

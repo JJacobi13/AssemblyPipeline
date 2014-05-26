@@ -1,8 +1,7 @@
 """
 @author: Jetse
-@version: 0.1
-@attention: TODO: Remove all # from the FileControl methods to include the control (biopython is needed for testing)
-@attention: Not tested yet...
+@version: 0.2
+@attention: Not tested yet, full dataset needed...
 @bug: output of quake single probably has to be changed, will figure out in tests
 
 "Quake is a package to correct substitution sequencing errors in experiments with deep coverage (e.g. >15X), 
@@ -19,7 +18,8 @@ Expects a global variable CONFIG (e.g. parsed from json) of at least the followi
     "kmerSize": 17
     "options":{
         "quake":{
-            "minCounts": 10
+            "path": "/home/VLPB/programs/Quake/bin/quake.py",
+            "optionalOpts": ""
         }
     }
 }
@@ -27,38 +27,31 @@ Expects a global variable CONFIG (e.g. parsed from json) of at least the followi
 ###############
 ##  Imports  ##
 ###############
-# from qualityControl import FileControl
+from qualityControl import FileControl
 
 #############
 ##  Quake  ##
 #############
+#If data is paired end, use the paired end rules...
+ruleorder: quakePaired > quakeSingle
+
 ##  Paired end
 rule quakePaired:
-    input:
-        forward = "{samples}_1.fastq",
-        reversed = "{samples}_2.fastq",
-        fileNames = "{samples}.filenames.txt",
-        countsFile = "{samples}.counts"
+    input: "{sample}.filenames.txt",
     output:
-        forward = "{samples}.quake_1.fastq",
-        reversed = "{samples}.quake_2.fastq" 
+        forward = "quake.{sample}_1.fastq",
+        reversed = "quake.{sample}_2.fastq" 
     threads: 999
     run: 
-        shell("correct -f {input.fileNames} -k {kmer} -c {minCounts} -m {input.countsFile} -p {threads}".format(input=input,
-                                                                                                                kmer=CONFIG["kmerSize"],
-                                                                                                                minCounts=CONFIG["options"]["quake"]["minCounts"],
-                                                                                                                threads=threads))
-        os.rename(output.forward.replace(".quake_1","_1.cor"), output.forward)
-        os.rename(output.reversed.replace(".quake_2","_2.cor"), output.reversed)
-#         FileControl.fastqControl(output.forward, output.reversed)
-
-
-rule kmerCountsPaired:
-    input:
-        forward = "{samples}_1.fastq",
-        reversed = "{samples}_2.fastq"
-    output: "{samples}.counts"
-    shell: "cat {input.forward} {input.reversed} | count-qmers -k " + CONFIG.getGlobalOption("kmer") + " > {output[0]}"
+        shell("python2 {quakePath} {optional} -f {readsFile} -k {kmerSize} -p {threads}"
+              "".format(quakePath=CONFIG["options"]["quake"]["path"],
+                        optional=CONFIG["options"]["quake"]["optionalOpts"],
+                        readsFile=input[0],
+                        kmerSize=CONFIG["kmerSize"],
+                        threads=threads))
+        os.rename(wildcards.sample + "_1.cor.fastq", output.forward)
+        os.rename(wildcards.sample + "_2.cor.fastq", output.reversed)
+        FileControl.fastqControl(output.forward, output.reversed)
 
 #Put paired end data file names into a file with a whitespace inbetween.
 rule fastqNamesFile:
@@ -70,28 +63,15 @@ rule fastqNamesFile:
             
 ##  Unpaired
 rule quakeSingle:
-    input:
-        fastq = "{sample}.fastq",
-        fileNames = "{sample}.filenames.txt",
-        countsFile = "{sample}.counts"
+    input: fastq = "{sample}.fastq"
     output: "quake.{sample}.fastq"
     threads: 999
     run:
-        shell("correct -f {input.fileNames} -k {kmer} -c {minCounts} -m {input.countsFile} -p {threads}".format(input=input,
-                                                                                                                kmer=CONFIG["kmerSize"],
-                                                                                                                minCounts=CONFIG["options"]["quake"]["minCounts"],
-                                                                                                                threads=threads))
-#         FileControl.fastqControl(output.forward, output.reversed)
-        
-rule kmerCountsSingle:
-    input: "{sample}.fastq"
-    output: "{sample}.counts"
-    shell: "cat {input[0]} | count-qmers -k " + CONFIG.getGlobalOption("kmer") + " > {output[0]}"       
-        
-#Write the filename to a file        
-rule fastqNameFile:
-    input: "{sample}.fastq"
-    output: "{sample}.filenames.txt"
-    shell: "echo \"{input[0]}\" > {output[0]}"
-            
-            
+        shell("python2 {quakePath} {optional} -r {readsFile} -k {kmerSize} -p {threads}"
+              "".format(quakePath=CONFIG["options"]["quake"]["path"],
+                        optional=CONFIG["options"]["quake"]["optionalOpts"],
+                        readsFile=input[0],
+                        kmerSize=CONFIG["kmerSize"],
+                        threads=threads))
+        os.rename(wildcards.sample + ".cor.fastq", output[0])
+        FileControl.fastqControl(output[0])

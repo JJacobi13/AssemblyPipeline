@@ -13,7 +13,10 @@ for sample in CONFIG["libraries"]:
             pass
 
 #TODO: relative paths, __file__ is path to snakemake...       
-include: "/home/jaco001/programmingProjects/assembly/snakemake/rules/fastqProcessing/Trimming.py"
+include: "/home/VLPB/pythonCodebase/AssemblyPipeline/snakemake/rules/fastqProcessing/Trimming.py"
  
-include: "/home/jaco001/programmingProjects/assembly/snakemake/rules/fastqProcessing/ContaminationFiltering.py"
+include: "/home/VLPB/pythonCodebase/AssemblyPipeline/snakemake/rules/fastqProcessing/ContaminationFiltering.py"
 
+include: "/home/VLPB/pythonCodebase/AssemblyPipeline/snakemake/rules/fastqProcessing/Merging.py"
+
+include: "/home/VLPB/pythonCodebase/AssemblyPipeline/snakemake/rules/fastqProcessing/KmerCorrection.py"

@@ -14,7 +14,6 @@ All accepted input formats are:
 #################################
 ##  fq suffix to fastq suffix  ##
 #################################
-##TODO: UNTESTED, test this rule!
 rule fqToFastq:
     input: "{prefix}.fq"
     output: "{prefix}.fastq"

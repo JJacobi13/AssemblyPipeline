@@ -2,13 +2,18 @@ from Bio import SeqIO
 from qualityControl import Exceptions
 from collections import Counter
 
-def fastqControlPaired(forwardFastq, reversedFastq, dna=True):
-    forwardRecords = fastqControl(forwardFastq, dna)
-    reversedRecords = fastqControl(reversedFastq, dna)
-    if forwardRecords != reversedRecords:
-        raise Exceptions.FileFormatException("Forward file has not the same number of sequences as the reversed file when comparing " + forwardFastq + " with " + reversedFastq)
-
-def fastqControl(fastqFile, dna=True):
+def fastqControl(forwardFastq, reversedFastq=None, dna=True):
+    print("Checking: " + forwardFastq)
+    forwardRecords = _fastqContentControl(forwardFastq, dna)
+    print("Correct! File contains {} reads".format(forwardRecords))
+    if reversedFastq != None:
+        print("Checking: " + reversedFastq)
+        reversedRecords = _fastqContentControl(reversedFastq, dna)
+        print("Correct! File contains {} reads".format(reversedRecords))
+        if forwardRecords != reversedRecords:
+            raise Exceptions.FileFormatException("Forward file has not the same number of sequences as the reversed file when comparing " + forwardFastq + " with " + reversedFastq)
+        print("Paired end is correct!")
+def _fastqContentControl(fastqFile, dna=True):
     noOfRecords = 0
     try:
         for record in SeqIO.parse(open(fastqFile), "fastq"):

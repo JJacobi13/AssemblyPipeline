@@ -1,9 +1,12 @@
 """
 @author: Jetse
-@version: 0.1
-@attention: TODO: Remove all # from the FileControl methods to include the control (biopython is needed for testing)
+@version: 0.2
  
 Trimming of fastq files. For usage, include this in your workflow.
+
+Required programs:
+* trimmomatic
+* ea-utils
 
 Expects a global variable CONFIG (e.g. parsed from json) of at least the following structure:
 {
@@ -35,7 +38,7 @@ _2.fastq (reversed reads).
 ###############
 ##  Imports  ##
 ###############
-# from qualityControl import FileControl
+from qualityControl import FileControl
 import collections
 
 #################
@@ -56,7 +59,7 @@ rule fastqMcfPaired:
 																																					adapterFile=CONFIG["illuminaAdapters"],
 																																					input=input,
 																																					output=output))
-# 		FileControl.fastqControl(output.forward, output.reversed)
+		FileControl.fastqControl(output.forward, output.reversed)
 		
 rule fastqMcfSingle:
 	input:"{sample}.fastq",
@@ -67,7 +70,7 @@ rule fastqMcfSingle:
 																										adapterFile=CONFIG["illuminaAdapters"],
 																										input=input,
 																										output=output))
-# 		FileControl.fastqControl(output[0])
+		FileControl.fastqControl(output[0])
 
 ###################
 ##  Trimmomatic  ##
@@ -100,7 +103,7 @@ rule trimmomaticPaired:
 					adapterFile=CONFIG["illuminaAdapters"],
 					threads=threads,
 					trimOpts=trimOpts))
-# 		FileControl.fastqControl(output.forward, output.reversed)
+		FileControl.fastqControl(output.forward, output.reversed)
 		
 rule trimmomaticSingle:
 	input: "{sample}.fastq"
@@ -121,7 +124,7 @@ rule trimmomaticSingle:
 					adapterFile=CONFIG["illuminaAdapters"],
 					threads=threads,
 					trimOpts=trimOpts))
-# 		FileControl.fastqControl(output[0])
+		FileControl.fastqControl(output[0])
 	
 # rule cutadapt:
 # 	input:

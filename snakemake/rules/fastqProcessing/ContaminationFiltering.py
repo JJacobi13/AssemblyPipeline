@@ -2,7 +2,7 @@
 @author: Jetse
 @version: 0.1
 @attention: TODO: Remove all # from the FileControl methods to include the control (biopython is needed for testing)
-@attention: Not tested yet...
+@attention: Not tested yet, bowtie2 needs 64 bit machine, virtual machine is 32 bit...
 
 This module can be executed for any organism with a known reference genome. 
 The {organism} is used as a wildcard, and has to be present as a key in the JSON file below the 
@@ -16,6 +16,9 @@ The {organism} is used as a wildcard, and has to be present as a key in the JSON
 In this JSON there are two reference genomes. When the fastq reads which map on the PhiX reference genome have to be
 filtered, the prefix PhiXFiltered has to be used. The command eColiFiltered will filter all reads out that map on the
 eColi reference genome.
+
+Required programs:
+* bowtie2
 
 Expects a global variable CONFIG (e.g. parsed from json) of at least the following structure for paired end data:
 {
@@ -43,8 +46,8 @@ rule filterPaired:
     input: 
         forward = "{sample}_1.fastq",
         reversed = "{sample}_2.fastq",
-        reference = lambda wildcards: REF_GENOMES[wildcards.org],
-        index = lambda wildcards: REF_GENOMES[wildcards.org] + ".1.bt2"
+        reference = lambda wildcards: CONFIG["contaminationRefGenomes"][wildcards.org],
+        index = lambda wildcards: CONFIG["contaminationRefGenomes"][wildcards.org] + ".1.bt2"
     output: 
         forward = "{org}Filtered.{sample}_1.fastq",
         reversed = "{org}Filtered.{sample}_2.fastq"
@@ -62,13 +65,16 @@ rule filterPaired:
         os.rename(output.forward + "_tmp_unmapppedPhix.1.fastq", output.forward)
         os.rename(output.forward + "_tmp_unmapppedPhix.2.fastq", output.reversed)
 #         FileControl.fastqControl(output.forward, output.reversed)
-        
+
+def getReference(wildcards):
+    print(wildcards)
+            
 rule filterSingle:
     input:
         fastq = "{sample}.fastq",
-        reference = lambda wildcards: REF_GENOMES[wildcards.org],
-        index = lambda wildcards: REF_GENOMES[wildcards.org] + ".1.bt2"
-    output: "{org}Filtered.{sample}.fastq"
+        reference = lambda wildcards: CONFIG["contaminationRefGenomes"][wildcards.org],
+        index = lambda wildcards: CONFIG["contaminationRefGenomes"][wildcards.org] + ".1.bt2"
+    output: "{org}_filtered.{sample}.fastq"
     run:
         print("bowtie2 -p {threads} -x {input.reference} "
               "--un {output[0]} "
