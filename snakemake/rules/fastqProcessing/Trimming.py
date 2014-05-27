@@ -48,11 +48,11 @@ ruleorder: fastqMcfPaired > fastqMcfSingle
 
 rule fastqMcfPaired:
 	input: 
-		forward = "{sample}_1.fastq",
-		reversed = "{sample}_2.fastq"
+		forward = "preprocessing/{sample}_1.fastq",
+		reversed = "preprocessing/{sample}_2.fastq"
 	output: 
-		forward = "mcf.{sample}_1.fastq",
-		reversed = "mcf.{sample}_2.fastq"
+		forward = "preprocessing/mcf.{sample}_1.fastq",
+		reversed = "preprocessing/mcf.{sample}_2.fastq"
 	run: 
 		shell("fastq-mcf {optionalParams} -D  {dups} -o {output.forward} -o {output.reversed} {adapterFile} {input.forward} {input.reversed}".format(optionalParams=CONFIG["options"]["fastqMcf"]["optionalOptions"],
 																																					dups=CONFIG["options"]["fastqMcf"]["dupLen"],
@@ -62,8 +62,8 @@ rule fastqMcfPaired:
 		FileControl.fastqControl(output.forward, output.reversed)
 		
 rule fastqMcfSingle:
-	input:"{sample}.fastq",
-	output: "mcf.{sample}.fastq"
+	input:"preprocessing/{sample}.fastq",
+	output: "preprocessing/mcf.{sample}.fastq"
 	run: 
 		shell("fastq-mcf {optionalParams} -D  {dups} -o {output[0]} {adapterFile} {input[0]}".format(optionalParams=CONFIG["options"]["fastqMcf"]["optionalOptions"],
 																										dups=CONFIG["options"]["fastqMcf"]["dupLen"],
@@ -79,13 +79,13 @@ ruleorder: trimmomaticPaired > trimmomaticSingle
 
 rule trimmomaticPaired:
 	input:
-		forward = "{sample}_1.fastq",
-		reversed = "{sample}_2.fastq"
+		forward = "preprocessing/{sample}_1.fastq",
+		reversed = "preprocessing/{sample}_2.fastq"
 	output:
-		forward = "trim.{sample}_1.fastq",
-		reversed = "trim.{sample}_2.fastq",
-		forwardUnpaired = "trim.{sample}_unpaired_1.fastq",
-		reversedUnpaired = "trim.{sample}_unpaired_2.fastq"
+		forward = "preprocessing/trim.{sample}_1.fastq",
+		reversed = "preprocessing/trim.{sample}_2.fastq",
+		forwardUnpaired = "preprocessing/trim.{sample}_unpaired_1.fastq",
+		reversedUnpaired = "preprocessing/trim.{sample}_unpaired_2.fastq"
 	threads: 999
 	run: 
 		TrimOpts = collections.namedtuple("TrimOpts", CONFIG["options"]["trimmomatic"].keys())
@@ -106,8 +106,8 @@ rule trimmomaticPaired:
 		FileControl.fastqControl(output.forward, output.reversed)
 		
 rule trimmomaticSingle:
-	input: "{sample}.fastq"
-	output: "trim.{sample}.fastq"
+	input: "preprocessing/{sample}.fastq"
+	output: "preprocessing/trim.{sample}.fastq"
 	threads: 999
 	run:
 		TrimOpts = collections.namedtuple("TrimOpts", CONFIG["options"]["trimmomatic"].keys())

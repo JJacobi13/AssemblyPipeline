@@ -23,6 +23,9 @@ Expects a global variable CONFIG (e.g. parsed from json) of at least the followi
         }
     }
 }
+
+Data requirements:
+* at least 15x coverage
 """
 ###############
 ##  Imports  ##
@@ -37,10 +40,10 @@ ruleorder: quakePaired > quakeSingle
 
 ##  Paired end
 rule quakePaired:
-    input: "{sample}.filenames.txt",
+    input: "preprocessing/{sample}.filenames.txt",
     output:
-        forward = "quake.{sample}_1.fastq",
-        reversed = "quake.{sample}_2.fastq" 
+        forward = "preprocessing/quake.{sample}_1.fastq",
+        reversed = "preprocessing/quake.{sample}_2.fastq" 
     threads: 999
     run: 
         shell("python2 {quakePath} {optional} -f {readsFile} -k {kmerSize} -p {threads}"
@@ -56,15 +59,15 @@ rule quakePaired:
 #Put paired end data file names into a file with a whitespace inbetween.
 rule fastqNamesFile:
     input:
-        forward = "{samples}_1.fastq",
-        reversed = "{samples}_2.fastq"
-    output:"{samples}.filenames.txt"
+        forward = "preprocessing/{samples}_1.fastq",
+        reversed = "preprocessing/{samples}_2.fastq"
+    output:"preprocessing/{samples}.filenames.txt"
     shell: "echo \"{input.forward} {input.reversed}\" > {output[0]}"
             
 ##  Unpaired
 rule quakeSingle:
-    input: fastq = "{sample}.fastq"
-    output: "quake.{sample}.fastq"
+    input: fastq = "preprocessing/{sample}.fastq"
+    output: "preprocessing/quake.{sample}.fastq"
     threads: 999
     run:
         shell("python2 {quakePath} {optional} -r {readsFile} -k {kmerSize} -p {threads}"

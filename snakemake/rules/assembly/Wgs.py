@@ -20,6 +20,11 @@ Expects a global variable CONFIG (e.g. parsed from json) of at least the followi
             "readlen" : 100,
             "platform" : "illumina"
         }
+    },
+    "wgs":{
+        "input":{
+            "fragData":["../preprocessing/trim.fragData_1.fastq"]
+        }
     }
 }
 
@@ -27,43 +32,55 @@ Expects a global variable CONFIG (e.g. parsed from json) of at least the followi
 ###############
 ##  Imports  ##
 ###############
-import math
+import math, os
 
 ##########################
 ##  WGS assembler rules ##
 ##########################
 rule wgsExecution:
-    input: dynamic("{sample}.frg")
-    output: "{sample}assembly/9-terminator/assembly.ctg.fasta"
-    shell: "mkdir -p {sample}assembly/9-terminator; touch {output[0]}"
+    input: expand("assembly/{sample}.frg",sample=CONFIG["options"]["wgs"]["input"].keys())
+    output: "assembly/wgs/9-terminator/assembly.ctg.fasta"
+    run: 
+        specFile = SpecFile("assembly/wgs.cnf",CONFIG["maxMem"],threads)
+        print("runCA -d assembly/wgs/ -p assembly -s {specFile} {inputFiles}".format(specFile=specFile.fileName, inputFiles=" ".join(input)))
+        if not os.path.exists("assembly/wgs/9-terminator"):
+            os.mkdir("assembly/wgs/9-terminator")
+        open(output[0], "a").close()
+        
+        
+ruleorder: fastqToCaPaired > fastqToCaSingle
+
+rule fastqToCaPaired:
+    input: lambda wildcards: CONFIG["options"]["wgs"]["input"][wildcards.sample]
+    output: "assembly/{sample}.frg"
+    run:
+        print("fastqToCA -insertSize {insSize} {insDev} -libraryname {sample} -technology {tech} {direction} -mates {input[0]},{input[1]} "
+                  "> {output[0]}".format(
+                                         insSize=CONFIG["libraries"][wildcards.sample]["insertSize"],
+                                         insDev=CONFIG["libraries"][wildcards.sample]["insertSizeStdev"],
+                                         sample=wildcards.sample,
+                                         tech=getTech(CONFIG["libraries"][wildcards.sample]["platform"], CONFIG["libraries"][wildcards.sample]["readlen"]),
+                                         direction=getOrientation(CONFIG["libraries"][wildcards.sample]["type"]),
+                                         input=input,
+                                         output=output))
+        open(output[0], 'a').close()
+
+rule fastqToCaSingle:
+    input: "preprocessing/{sample}_1.fastq"
+    output: "assembly/{sample}.frg"
+    run:
+        print("fastqToCA -technology {tech} -reads {input[0]} > {output[0]}"
+                  "".format(
+                            tech=getTech(CONFIG["libraries"][wildcards.sample]["platform"], CONFIG["libraries"][wildcards.sample]["readlen"]),
+                            input=input,
+                            output=output
+                            ))
+        open(output[0], 'a').close()
       
 rule wgsCleanup:
-    input: "{sample}assembly/9-terminator/assembly.ctg.fasta"
-    output: "wgs.contigs.fasta"
-    shell: "touch {output[0]}"
-  
-rule prepareWgsPaired:
-    input: 
-        forward="{sample}_1.fastq"
-        reversed="{sample}_2.fastq"
-    output: "{sample}.frg"
-    run: 
-        LibOpts = collections.namedtuple("LibOpts", CONFIG["libraries"][wildcards.sample].keys())
-        libOpts = LibOpts(**CONFIG["libraries"][wildcards.sample])
-        print("fastqToCA -insertsize {libOpts.insertSize} {libOpts.insertSizeStdev} {orientation} "
-        "-mates {input.forward} {input.reversed} -libraryname {sampleName} -technology {tech} "
-        "> {output[0]}".format(
-                                libOpts=libOpts,
-                                orientation=getOrientation(libOpts.type),
-                                input=input,
-                                sampleName=wildcards.sample,
-                                tech=getTech(libOpts.platform, libOpts.readlen))
-
-
-rule prepareWgsSingle:
-    input: "{sample}.fastq"
-    output: "{sample}.frg"
-    print("fastqToCA -reads {input[0] -libraryname {wildcards.sample} > {output[0]}")
+    input: "assembly/wgs/9-terminator/assembly.ctg.fasta"
+    output: "assembly/wgs.contigs.fasta"
+    shell: "mv {input[0]} {output[0]}"
 
 #################
 ##  Functions  ##
@@ -72,12 +89,15 @@ def getTech(platform, readlen):
     """
     The method getType returns the technology of the reads in the format WGS accepts.
     """
-    if readlen < 160:
-        return "illumina"  
-    elif platform == "illumina":
+        
+    if platform == "illumina":
+        if readlen < 160:
+            return "illumina"  
         return "illumina-long"
     elif platform == "454":
         return "454"
+    elif platform == "pacbio":
+        return "pacbio-raw"
     raise("Unrecognized combination of readlen and platform")
     
 def getOrientation(libraryType):
@@ -98,7 +118,7 @@ class SpecFile(object):
     The specfile object creates a specfile for the wgs assembler based on the number of threads and threads the user wants to use
     """
     def __init__(self, fileName, maxMem, maxThr):
-        self.filename = fileName
+        self.fileName = fileName
         with open(self.fileName, "w") as specWriter:
             specWriter.write("#Default allowed error rates for Illumina\n")
             specWriter.write("utgErrorRate = 0.03\n")

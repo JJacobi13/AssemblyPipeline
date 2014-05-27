@@ -15,15 +15,15 @@ All accepted input formats are:
 ##  fq suffix to fastq suffix  ##
 #################################
 rule fqToFastq:
-    input: "{prefix}.fq"
-    output: "{prefix}.fastq"
+    input: "preprocessing/{prefix}.fq"
+    output: "preprocessing/{prefix}.fastq"
     shell: "ln -s {input[0]} {output[0]}"
     
 ####################
 ##  SFF to fastq  ##
 ####################
 rule sffToFastq:
-    input: inFile = "{samples}.sff"
-    output: outFile = "{samples}.fastq"
+    input: inFile = "preprocessing/{samples}.sff"
+    output: outFile = "preprocessing/{samples}.fastq"
     shell: "sff2fastq -o {output.outFile} {input.inFile}"
     

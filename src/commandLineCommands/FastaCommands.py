@@ -29,14 +29,10 @@ class BlastCommand(Command.Command):
 class GenBlastA(Command.Command):
     
     def setCommand(self):
-        self.outputFile = self.outputDir + self.name + ".gbo"
+        self.outputFile = self.outputDir + os.path.basename(os.path.splitext(self.proteins)[0]) + ".gbo"
         self.report = self.referenceGenome + ".gba.report"
         self.blastOutput = self.referenceGenome + ".blast"
         self.addArg("genBlastA")
-        self.addArg("-P blast")
         self.addArg("-q " + self.proteins)
         self.addArg("-t " + self.referenceGenome)
-        self.addArg("-p T")
-        self.addArg("-pg tblastx")
-        self.addArg("-e 1e-5")
         self.addArg("-o " + self.outputFile)

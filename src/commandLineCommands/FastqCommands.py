@@ -1,4 +1,4 @@
-import Command
+import Command, os
 
 class MergeCommand(Command.Command):
     """
@@ -15,3 +15,11 @@ class MergeCommand(Command.Command):
             self.addArg(fastqFile)
         self.addArg("> " + self.outputFile)
         
+        
+class SubsetCommand(Command.Command):
+    
+    def setCommand(self):
+        self.outputFile = self.outputDir + "subset_" + os.path.basename(self.fastqFile)
+        self.addArg("head -n 4000000")
+        self.addArg(self.fastqFile)
+        self.addArg("> " + self.outputFile)

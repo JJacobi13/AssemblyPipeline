@@ -1,6 +1,7 @@
 import logging, os, subprocess, re, argparse
 from Bio import SeqIO
-from commandLineCommands import Rscripts, Mappers, BamCommands, FastaCommands
+from commandLineCommands import Rscripts, Mappers, BamCommands, FastaCommands,\
+    FastqCommands
 from qualityControl.Reporter import Reporter, LaTeX
 from configuration import Configuration
 from parsers import GenBlastParser
@@ -115,6 +116,7 @@ class AssemblyStatistics(object):
             table.addRow(["Cegma partial: ",self.cegmaScore[1] + "\%"])
         for name, value in self.otherCegmaScores.iteritems():
             table.addRow(["",""])
+            print value[0]
             table.addRow([name + " complete: ",value[0] + "\%"])
             table.addRow([name + " partial: ",value[1] + "\%"])
             
@@ -186,7 +188,9 @@ class AssemblyStatistics(object):
         """
         This method executes Tophat to map the RNA reads against the assembly, merges the output bam fils of tophat (mapped/unmapped) and calculates the percentage of mapped reads.
         """
-        mappedBam = Mappers.Tophat(self.outputDir, refGenome=self.fastaFile, forwardRna=self.forwardRna, reversedRna=self.reversedRna).execute()
+        forwardSubset=FastqCommands.SubsetCommand(self.outputDir, fastqFile=self.forwardRna).execute()
+        reversedSubset=FastqCommands.SubsetCommand(self.outputDir, fastqFile=self.reversedRna).execute()
+        mappedBam = Mappers.Tophat(self.outputDir, refGenome=self.fastaFile, forwardRna=forwardSubset, reversedRna=reversedSubset).execute()
         mergedBam = BamCommands.BamMerger(self.outputDir, bamFiles = [mappedBam,os.path.dirname(mappedBam) +"/unmapped.bam"]).execute()
         self.rnaMappingStats = self.getMappingPerc(mergedBam)
         
@@ -200,7 +204,8 @@ class AssemblyStatistics(object):
         if self.reversed == None:
             samFile = Mappers.Bowtie(self.outputDir, refGenome=self.fastaFile, fastqFile=self.forward).execute()
         else:
-            samFile = Mappers.Bowtie(self.outputDir, refGenome=self.fastaFile, forward=self.forward, reversed=self.reversed, insertSize=self.insertSize).execute()
+#             samFile = Mappers.Bowtie(self.outputDir, refGenome=self.fastaFile, forward=self.forward, reversed=self.reversed, insertSize=self.insertSize).execute()
+            samFile = Mappers.BwaSampe(self.outputDir, refGenome=self.fastaFile, forwardFastq=self.forward, reversedFastq=self.reversed).execute()
 
         bamFile = BamCommands.SamToBamConverter(self.outputDir, samFile=samFile).execute()
         logging.info("Getting DNA mapping statistics")
@@ -222,6 +227,7 @@ class AssemblyStatistics(object):
         * N90
         all output is written to the log
         """
+        logging.info("Calculating base statistics")
         [contigLengths, totalLength] = self.getContigsLengths(self.fastaFile)
         [n50Index, n50] = self.calculateN(50, contigLengths, totalLength)
         [n90Index, n90] = self.calculateN(90, contigLengths, totalLength)

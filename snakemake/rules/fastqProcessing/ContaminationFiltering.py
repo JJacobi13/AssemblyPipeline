@@ -44,13 +44,13 @@ For unpaired data, the libraries section is not needed in this module.
 ###############################    
 rule filterPaired:
     input: 
-        forward = "{sample}_1.fastq",
-        reversed = "{sample}_2.fastq",
+        forward = "preprocessing/{sample}_1.fastq",
+        reversed = "preprocessing/{sample}_2.fastq",
         reference = lambda wildcards: CONFIG["contaminationRefGenomes"][wildcards.org],
         index = lambda wildcards: CONFIG["contaminationRefGenomes"][wildcards.org] + ".1.bt2"
     output: 
-        forward = "{org}Filtered.{sample}_1.fastq",
-        reversed = "{org}Filtered.{sample}_2.fastq"
+        forward = "preprocessing/{org}Filtered.{sample}_1.fastq",
+        reversed = "preprocessing/{org}Filtered.{sample}_2.fastq"
     threads: 999
     run: 
         insertSize = int(CONFIG["libraries"][wildcards.sample]["insertSize"])
@@ -65,16 +65,13 @@ rule filterPaired:
         os.rename(output.forward + "_tmp_unmapppedPhix.1.fastq", output.forward)
         os.rename(output.forward + "_tmp_unmapppedPhix.2.fastq", output.reversed)
 #         FileControl.fastqControl(output.forward, output.reversed)
-
-def getReference(wildcards):
-    print(wildcards)
             
 rule filterSingle:
     input:
-        fastq = "{sample}.fastq",
+        fastq = "preprocessing/{sample}.fastq",
         reference = lambda wildcards: CONFIG["contaminationRefGenomes"][wildcards.org],
         index = lambda wildcards: CONFIG["contaminationRefGenomes"][wildcards.org] + ".1.bt2"
-    output: "{org}_filtered.{sample}.fastq"
+    output: "preprocessing/{org}_filtered.{sample}.fastq"
     run:
         print("bowtie2 -p {threads} -x {input.reference} "
               "--un {output[0]} "

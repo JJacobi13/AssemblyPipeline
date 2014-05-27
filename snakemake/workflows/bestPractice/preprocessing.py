@@ -8,7 +8,9 @@ with open("config.json") as f:
 for sample in CONFIG["libraries"]:
     for i in range(len(CONFIG["libraries"][sample]["reads"])):
         try:
-            os.symlink(CONFIG["libraries"][sample]["reads"][i], sample +"_" + str(i+1) + ".fastq")
+            if os.path.exists("preprocessing") == False:
+                os.mkdir("preprocessing")
+            os.symlink(CONFIG["libraries"][sample]["reads"][i], "preprocessing/"+ sample +"_" + str(i+1) + ".fastq")
         except FileExistsError:
             pass
 
@@ -21,3 +23,8 @@ include: os.path.dirname(sys.argv[2])+"/../../rules/fastqProcessing/Merging.py"
 
 include: os.path.dirname(sys.argv[2])+"/../../rules/fastqProcessing/KmerCorrection.py"
 
+#Assembly, preprocessing is wrong name :P
+include: os.path.dirname(sys.argv[2])+"/../../rules/assembly/Wgs.py"
+
+rule all:
+    input: "assembly/wgs.contigs.fasta"

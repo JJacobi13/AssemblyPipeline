@@ -25,12 +25,12 @@ Expects the input files in the working directory. The input files have to end wi
 #################################
 rule seqprep:
     input:
-        forward = "{samples}_1.fastq",
-        reversed = "{samples}_2.fastq"
+        forward = "preprocessing/{samples}_1.fastq",
+        reversed = "preprocessing/{samples}_2.fastq"
     output: 
-        merged = "merged.{samples}.fastq",
-        forwardSingle = "seqSingle.{samples}_1.fastq",
-        reversedSingle = "seqSingle.{samples}_2.fastq"
+        merged = "preprocessing/merged.{samples}.fastq",
+        forwardSingle = "preprocessing/seqSingle.{samples}_1.fastq",
+        reversedSingle = "preprocessing/seqSingle.{samples}_2.fastq"
     run: 
         shell("SeqPrep {phredEncoding} {optional}"
               "-f {input.forward} -r {input.reversed} "

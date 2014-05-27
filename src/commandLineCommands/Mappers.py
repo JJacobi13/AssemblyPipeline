@@ -52,9 +52,44 @@ class Tophat(Command.Command):
             self.bowtieIndex = indexer.bowtieIndex
     
     def setCommand(self):
-        self.outputFile = self.outputDir + os.path.basename(os.path.normpath(self.outputDir)) + "/accepted_hits.bam"
+        self.outputFile = self.outputDir + os.path.basename(os.path.splitext(self.forwardRna)[0]) + "/accepted_hits.bam"
         self.addArg("tophat")
         self.addArg("-o " + os.path.dirname(self.outputFile))
         self.addArg(self.bowtieIndex)
         self.addArg(self.forwardRna)
         self.addArg(self.reversedRna)
+        
+class BwaSampe(Command.Command):
+    
+    def checkInput(self):
+        BwaIndex(self.outputDir, fastaFile=self.refGenome).execute()
+        
+    def setCommand(self):
+        self.outputFile = self.outputDir + os.path.basename(os.path.splitext(self.forwardFastq)[0]) + ".sam"
+        self.addArg("bwa sampe " + self.refGenome)
+        self.addArg(BwaAln(self.outputDir, fastqFile = self.forwardFastq, refGenome=self.refGenome).execute())
+        self.addArg(BwaAln(self.outputDir, fastqFile = self.reversedFastq, refGenome=self.refGenome).execute())
+        self.addArg(self.forwardFastq)
+        self.addArg(self.reversedFastq)
+        self.addArg(self.outputFile)
+        
+class BwaAln(Command.Command):
+    
+    def checkInput(self):
+        BwaIndex(self.outputDir, fastaFile=self.refGenome).execute()
+        
+    def setCommand(self):
+        self.outputFile = self.outputDir + os.path.basename(os.path.splitext(self.fastqFile)[0]) + ".sai"
+        self.addArg("bwa aln ")
+        self.addArg("-t " + Configuration.instance.getGlobalOption("maxThreads"))
+        self.addArg(self.refGenome)
+        self.addArg(self.fastqFile)
+        self.addArg(self.outputFile)
+        
+class BwaIndex(Command.Command):
+    
+    def setCommand(self):
+        self.outputFile = self.fastaFile+".pac"
+        self.addArg("bwa index " + self.fastaFile)
+        
+    
